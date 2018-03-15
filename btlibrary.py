@@ -7,10 +7,11 @@ from novaprinter import prettyPrinter
 from helpers import retrieve_url
 
 class BtlibraryParser(HTMLParser):
-    def __init__(self):
-        super(BtlibraryParser, self).__init__()
+    def __init__(self, callback=None):
+        HTMLParser.__init__(self)
         self.state = self.init_state
         self.output = {}
+        self.callback = callback
 
     def handle_starttag(self, tag, attrs):
         self.state('starttag', tag, attrs)
@@ -37,11 +38,14 @@ class BtlibraryParser(HTMLParser):
             self.state = self.name_state
 
     def name_state(self, step, *args):
-        if step == 'endtag':
+        if step == 'starttag':
+            if args[0] == 'sup':
+                self.state = self.init_state
+        elif step == 'endtag':
             if args[0] == 'div':
                 self.state = self.init_state
         elif step == 'data':
-            self.output['name'] = self.output.setdefault('name', '') + data
+            self.output['name'] = self.output.setdefault('name', '') + args[0]
 
     def item_detail_state(self, step, *args):
         if step == 'starttag':
@@ -82,8 +86,12 @@ class BtlibraryParser(HTMLParser):
 
     def leech_state2(self, step, *args):
         if step == 'data':
-            self.output['leech'] = data
-            self.output['seeds'] = data
+            self.output['leech'] = args[0]
+            self.output['seeds'] = args[0]
+            if self.callback:
+                self.callback(self.output)
+            self.output = {}
+            self.state = self.init_state
 
 
 class btlibrary(object):
@@ -91,12 +99,14 @@ class btlibrary(object):
     name = 'BT Library'
 
     def __init__(self):
-        self.parser = BtlibraryParser()
+        self.parser = BtlibraryParser(self.callback)
+
+    def callback(self, d):
+        d['engine_url'] = self.url
+        prettyPrinter(d)
 
     def search_test(self, data):
-        for d in self.parser.feed(data):
-            d['engine_url'] = url
-            prettyPrinter(d)
+        self.parser.feed(data)
 
     def search(self, what, cat='all'):
         pass
