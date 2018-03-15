@@ -85,13 +85,15 @@ class BtlibraryParser(HTMLParser):
                 self.state = self.leech_state2
 
     def leech_state2(self, step, *args):
+        if step == 'endtag':
+            if args[0] == 'div':
+                if self.callback:
+                    self.callback(self.output)
+                self.output = {}
+                self.state = self.init_state
         if step == 'data':
-            self.output['leech'] = args[0]
-            self.output['seeds'] = args[0]
-            if self.callback:
-                self.callback(self.output)
-            self.output = {}
-            self.state = self.init_state
+            self.output['leech'] = self.output.setdefault('leech','') + args[0]
+            self.output['seeds'] = self.output.setdefault('seeds','') + args[0]
 
 
 class btlibrary(object):
