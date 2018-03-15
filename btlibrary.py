@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from HTMLParser import HTMLParser
+from urllib2 import urlopen, Request, re
 
 from novaprinter import prettyPrinter
 from helpers import retrieve_url
@@ -102,6 +103,8 @@ class btlibrary(object):
 
     def __init__(self):
         self.parser = BtlibraryParser(self.callback)
+        re_page = ''
+        re_purl = ''
 
     def callback(self, d):
         d['engine_url'] = self.url
@@ -110,8 +113,23 @@ class btlibrary(object):
     def search_test(self, data):
         self.parser.feed(data)
 
+    def parse(self, _url):
+        bd = retrieve_url(_url)
+        pages = int()
+        purl = ''
+        purl_t = ''
+        if pages > 10:
+            pages = 10
+        for i in xrange(pages):
+            purl = purl_t.format(i)
+            bd = retrieve_url(purl)
+            self.parser.feed(bd)
+
     def search(self, what, cat='all'):
-        pass
+        req = Request(url, {'keyword': what})
+        resp = urlopen(req)
+        if resp.code == 302:
+            self.parse(resp.headers['location'])
 
 
 if __name__ == "__main__":
