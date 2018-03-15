@@ -103,8 +103,10 @@ class btlibrary(object):
 
     def __init__(self):
         self.parser = BtlibraryParser(self.callback)
-        re_page = ''
-        re_purl = ''
+        self.not_found = '<p>抱歉，没有找到与关键词'
+        self.max_pages = 3
+        self.re_page = re.compile("<span>共(\d*)页</span>")
+        self.re_purl = re.compile("<a.*href='(.*)'>人气</a>")
 
     def callback(self, d):
         d['engine_url'] = self.url
@@ -115,18 +117,20 @@ class btlibrary(object):
 
     def parse(self, _url):
         bd = retrieve_url(_url)
-        pages = int()
-        purl = ''
-        purl_t = ''
-        if pages > 10:
-            pages = 10
+        if bd.find(self.not_found) > -1:
+            return
+        pages = int(self.re_page.findall(bd)[0])
+        purl = self.re_purl.findall(bd)[0]
+        purl_t = purl.replace('/1/', '/{}/')
+        if pages > self.max_pages:
+            pages = self.max_pages
         for i in xrange(pages):
             purl = purl_t.format(i)
             bd = retrieve_url(purl)
             self.parser.feed(bd)
 
     def search(self, what, cat='all'):
-        req = Request(url, {'keyword': what})
+        req = Request(self.url, 'keyword='+what)
         resp = urlopen(req)
         if resp.code == 302:
             self.parse(resp.headers['location'])
@@ -134,7 +138,7 @@ class btlibrary(object):
 
 if __name__ == "__main__":
     t = btlibrary()
-    with open('btl_src', 'rb') as f:
-        t.search_test(f.read())
-    # t.search('modern+family')
+    # with open('btl_src', 'rb') as f:
+    #     t.search_test(f.read())
+    t.search('modern+family')
 
