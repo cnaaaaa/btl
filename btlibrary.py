@@ -8,7 +8,7 @@ from helpers import retrieve_url
 
 class BtlibraryParser(HTMLParser):
     def __init__(self):
-        super().__init__()
+        super(BtlibraryParser, self).__init__()
         self.state = self.init_state
         self.output = {}
 
