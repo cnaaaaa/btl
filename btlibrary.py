@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from HTMLParser import HTMLParser
-from urllib2 import urlopen, Request, re
+import re
+import requests
 
 from novaprinter import prettyPrinter
-from helpers import retrieve_url
 
 class BtlibraryParser(HTMLParser):
     def __init__(self, callback=None):
@@ -98,25 +98,26 @@ class BtlibraryParser(HTMLParser):
 
 
 class btlibrary(object):
-    url = 'http://btlibrary.cc'
+    url = 'http://btlibrary.cc/'
     name = 'BT Library'
 
     def __init__(self):
         self.parser = BtlibraryParser(self.callback)
-        self.not_found = '<p>抱歉，没有找到与关键词'
+        self.not_found = '<p>抱歉，没有找到与关键词'.decode('utf-8')
         self.max_pages = 3
-        self.re_page = re.compile("<span>共(\d*)页</span>")
-        self.re_purl = re.compile("<a.*href='(.*)'>人气</a>")
+        self.re_page = re.compile("<span>共(\d*)页</span>".decode('utf-8'))
+        self.re_purl = re.compile("<a.*href='(.*)'>人气</a>".decode('utf-8'))
 
     def callback(self, d):
         d['engine_url'] = self.url
         prettyPrinter(d)
 
-    def search_test(self, data):
-        self.parser.feed(data)
-
-    def parse(self, _url):
-        bd = retrieve_url(_url)
+    def search(self, what, cat='all'):
+        s = requests.Session()
+        s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0'})
+        s.get(self.url)
+        resp = s.post(self.url, data={'keyword': what})
+        bd = resp.text
         if bd.find(self.not_found) > -1:
             return
         pages = int(self.re_page.findall(bd)[0])
@@ -126,14 +127,8 @@ class btlibrary(object):
             pages = self.max_pages
         for i in xrange(pages):
             purl = purl_t.format(i)
-            bd = retrieve_url(purl)
-            self.parser.feed(bd)
-
-    def search(self, what, cat='all'):
-        req = Request(self.url, 'keyword='+what)
-        resp = urlopen(req)
-        if resp.code == 302:
-            self.parse(resp.headers['location'])
+            bd = s.get(purl)
+            self.parser.feed(bd.text)
 
 
 if __name__ == "__main__":
