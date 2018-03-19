@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from HTMLParser import HTMLParser
-import re
+from urllib import unquote, quote_plus
 import requests
+
+import re
+import time
 
 from novaprinter import prettyPrinter
 
@@ -104,7 +107,7 @@ class btlibrary(object):
     def __init__(self):
         self.parser = BtlibraryParser(self.callback)
         self.not_found = '<p>抱歉，没有找到与关键词'.decode('utf-8')
-        self.max_pages = 3
+        self.max_pages = 8
         self.re_page = re.compile("<span>共(\d*)页</span>".decode('utf-8'))
         self.re_purl = re.compile("<a.*href='(.*)'>人气</a>".decode('utf-8'))
 
@@ -113,6 +116,8 @@ class btlibrary(object):
         prettyPrinter(d)
 
     def search(self, what, cat='all'):
+        what = unquote(what)
+        what = quote_plus(what)
         s = requests.Session()
         s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0'})
         s.get(self.url)
@@ -129,6 +134,7 @@ class btlibrary(object):
             purl = purl_t.format(i)
             bd = s.get(purl)
             self.parser.feed(bd.text)
+            time.sleep(0.4)
 
 
 if __name__ == "__main__":
