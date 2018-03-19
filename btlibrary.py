@@ -107,7 +107,7 @@ class btlibrary(object):
     def __init__(self):
         self.parser = BtlibraryParser(self.callback)
         self.not_found = '<p>抱歉，没有找到与关键词'.decode('utf-8')
-        self.max_pages = 8
+        self.max_pages = 5
         self.re_page = re.compile("<span>共(\d*)页</span>".decode('utf-8'))
         self.re_purl = re.compile("<a.*href='(.*)'>人气</a>".decode('utf-8'))
 
@@ -119,9 +119,9 @@ class btlibrary(object):
         what = unquote(what)
         what = quote_plus(what)
         s = requests.Session()
-        s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0'})
+        s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0', 'Content-Type': 'application/x-www-form-urlencoded'})
         s.get(self.url)
-        resp = s.post(self.url, data={'keyword': what})
+        resp = s.post(self.url, data='keyword='+what})
         bd = resp.text
         if bd.find(self.not_found) > -1:
             return
@@ -131,7 +131,7 @@ class btlibrary(object):
         if pages > self.max_pages:
             pages = self.max_pages
         for i in xrange(pages):
-            purl = purl_t.format(i)
+            purl = purl_t.format(i+1)
             bd = s.get(purl)
             self.parser.feed(bd.text)
             time.sleep(0.4)
