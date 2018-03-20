@@ -121,7 +121,7 @@ class btlibrary(object):
         s = requests.Session()
         s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0', 'Content-Type': 'application/x-www-form-urlencoded'})
         s.get(self.url)
-        resp = s.post(self.url, data='keyword='+what})
+        resp = s.post(self.url, data='keyword='+what)
         bd = resp.text
         if bd.find(self.not_found) > -1:
             return
