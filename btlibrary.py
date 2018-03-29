@@ -7,6 +7,7 @@ import requests
 
 import re
 import time
+import sys
 
 from novaprinter import prettyPrinter
 
@@ -116,8 +117,8 @@ class btlibrary(object):
         prettyPrinter(d)
 
     def search(self, what, cat='all'):
-        what = unquote(what)
-        what = quote_plus(what)
+        what = unquote(what).decode(sys.getfilesystemencoding())
+        what = quote_plus(what.encode('utf-8'))
         s = requests.Session()
         s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0', 'Content-Type': 'application/x-www-form-urlencoded'})
         s.get(self.url)
