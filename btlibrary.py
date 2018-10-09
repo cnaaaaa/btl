@@ -111,6 +111,7 @@ class btlibrary(object):
         self.max_pages = 5
         self.re_page = re.compile("<span>共(\d*)页</span>".decode('utf-8'))
         self.re_purl = re.compile("<a.*href='(.*)'>人气</a>".decode('utf-8'))
+        self.re_durl = re.compile("<div class='item-title'><a href='(.*)' target='_blank'>".decode('utf-8'))
 
     def callback(self, d):
         d['engine_url'] = self.url
@@ -121,21 +122,29 @@ class btlibrary(object):
         what = quote_plus(what.encode('utf-8'))
         s = requests.Session()
         s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0', 'Content-Type': 'application/x-www-form-urlencoded'})
-        s.get(self.url)
+        # may redirect, update url
+        rsp = s.get(self.url)
+        self.url = rsp.url
+        #
         resp = s.post(self.url, data='keyword='+what)
         bd = resp.text
         if bd.find(self.not_found) > -1:
             return
         pages = int(self.re_page.findall(bd)[0])
         purl = self.re_purl.findall(bd)[0]
+        purl = 'http:' + purl if purl.startswith('//') else purl
         purl_t = purl.replace('/1/', '/{}/')
         if pages > self.max_pages:
             pages = self.max_pages
         for i in xrange(pages):
             purl = purl_t.format(i+1)
             bd = s.get(purl)
-            self.parser.feed(bd.text)
-            time.sleep(0.4)
+            for durl in self.re_durl.findall(bd.text):
+                print(durl)
+                durl = 'http:' + durl if durl.startswith('//') else durl
+                bd = s.get(durl)
+                self.parser.feed(bd.text)
+                time.sleep(0.1)
 
 
 if __name__ == "__main__":
