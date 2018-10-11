@@ -5,3 +5,5 @@ h={
 'Accept-Encoding': 'gzip, deflate',
 'Upgrade-Insecure-Requests': '1',
 }
+
+[+\-*/]?\=?\+\(\([!+\[\]\(\)]*\)\)
